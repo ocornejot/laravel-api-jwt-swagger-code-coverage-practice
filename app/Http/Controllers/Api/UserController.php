@@ -8,7 +8,6 @@ use App\Models\User;
 /**
  * @OA\Info(title="API's JWT/Swagger", version="1.0")
  *
- * @OA\Server(url="http://api-jwt.test")
  */
 class UserController extends Controller
 {

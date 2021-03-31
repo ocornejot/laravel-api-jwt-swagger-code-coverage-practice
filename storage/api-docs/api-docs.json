@@ -4,11 +4,6 @@
         "title": "API's JWT/Swagger",
         "version": "1.0"
     },
-    "servers": [
-        {
-            "url": "http://api-jwt.test"
-        }
-    ],
     "paths": {
         "/api/auth/login": {
             "post": {
