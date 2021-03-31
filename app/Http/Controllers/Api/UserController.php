@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Http\Controllers\Controller;
+use App\Http\Controllers\Api\ApiResponseController;
 
 /**
  * @OA\Info(title="API's JWT/Swagger", version="1.0")
  *
  */
-class UserController extends Controller
+class UserController extends ApiResponseController
 {
     /**
      * Create a new AuthController instance.
@@ -46,7 +47,12 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::all();
-        return response()->json(compact('users'));
+        try {
+            $users = User::all();
+            return response()->json(compact('users'));
+            return $this->successResponse(compact('users'));
+        } catch (\Exception $e) {
+            return $this->errorResponse($e);
+        }
     }
 }

@@ -6,8 +6,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Controllers\Api\ApiResponseController;
 
-class AuthController extends Controller
+class AuthController extends ApiResponseController
 {
     /**
      * Create a new AuthController instance.
@@ -48,17 +49,21 @@ class AuthController extends Controller
      * )
      */
     public function login(Request $request){
-    	$validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
-        ]);
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'password' => 'required|string',
+            ]);
+            if ($validator->fails()) {
+                return $this->customResponse($validator->errors(), 422);
+            }
+            if (! $token = auth()->attempt($validator->validated())) {
+                return $this->customResponse(['error' => 'Unauthorized'], 401);
+            }
+            return $this->createNewToken($token);
+        } catch (\Exception $e) {
+            $this->errorResponse($e);
         }
-        if (! $token = auth()->attempt($validator->validated())) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-        return $this->createNewToken($token);
     }
 
     /**
@@ -103,25 +108,29 @@ class AuthController extends Controller
      * )
      */
     public function register(Request $request) {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|between:2,100',
-            'email' => 'required|string|email|max:100|unique:users',
-            'password' => 'required|string|confirmed|min:6',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|between:2,100',
+                'email' => 'required|string|email|max:100|unique:users',
+                'password' => 'required|string|confirmed|min:6',
+            ]);
 
-        if($validator->fails()){
-            return response()->json($validator->errors()->toJson(), 400);
+            if($validator->fails()){
+                return $this->customResponse($validator->errors()->toJson(), 400);
+            }
+
+            $user = User::create(array_merge(
+                        $validator->validated(),
+                        ['password' => bcrypt($request->password)]
+                    ));
+
+            return $this->successResponse([
+                'message' => 'User successfully registered',
+                'user' => $user,
+            ]);
+        } catch (\Exception $e) {
+            $this->errorResponse($e);
         }
-
-        $user = User::create(array_merge(
-                    $validator->validated(),
-                    ['password' => bcrypt($request->password)]
-                ));
-
-        return response()->json([
-            'message' => 'User successfully registered',
-            'user' => $user
-        ], 201);
     }
 
 
@@ -150,9 +159,13 @@ class AuthController extends Controller
      * )
      */
     public function logout() {
-        auth()->logout();
+        try {
+            auth()->logout();
+            return $this->successResponse(['message' => 'User successfully signed out']);
+        } catch (\Exception $e) {
+            $this->errorResponse($e);
+        }
 
-        return response()->json(['message' => 'User successfully signed out']);
     }
 
     /**
@@ -180,7 +193,11 @@ class AuthController extends Controller
      * )
      */
     public function refresh() {
-        return $this->createNewToken(auth()->refresh());
+        try {
+            return $this->createNewToken(auth()->refresh());
+        } catch (\Exception $e) {
+            $this->errorResponse($e);
+        }
     }
 
     /**
@@ -208,7 +225,11 @@ class AuthController extends Controller
      * )
      */
     public function userProfile() {
-        return response()->json(auth()->user());
+        try {
+            return $this->successResponse(auth()->user());
+        } catch (\Exception $e) {
+            $this->errorResponse($e);
+        }
     }
 
     /**
@@ -219,7 +240,7 @@ class AuthController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     protected function createNewToken($token){
-        return response()->json([
+        return $this->successResponse([
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60,
