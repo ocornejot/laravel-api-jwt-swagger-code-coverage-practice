@@ -127,7 +127,7 @@ class AuthController extends ApiResponseController
             return $this->successResponse([
                 'message' => 'User successfully registered',
                 'user' => $user,
-            ]);
+            ], 201);
         } catch (\Exception $e) {
             $this->errorResponse($e);
         }

@@ -49,7 +49,6 @@ class UserController extends ApiResponseController
     {
         try {
             $users = User::all();
-            return response()->json(compact('users'));
             return $this->successResponse(compact('users'));
         } catch (\Exception $e) {
             return $this->errorResponse($e);
