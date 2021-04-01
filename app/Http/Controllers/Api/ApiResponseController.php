@@ -12,9 +12,9 @@ class ApiResponseController extends Controller
      * @param $data
      * @return JsonResponse
      */
-    public function successResponse($data)
+    public function successResponse($data, $code = 200)
     {
-        return response()->json($data, 200);
+        return response()->json($data, $code);
     }
 
     /**
